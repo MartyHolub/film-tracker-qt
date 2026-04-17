@@ -10,7 +10,7 @@ Qt Widgets verze projektu [film-tracker](https://github.com/MartyHolub/film-trac
 - detail vybraného filmu
 - kontextové menu a klávesové zkratky
 - dialog Statistiky
-- menu **Nápověda -> O autorovi**
+- levé menu **O autorovi**
 
 ## Struktura
 
