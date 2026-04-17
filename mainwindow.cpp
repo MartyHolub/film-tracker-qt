@@ -6,6 +6,7 @@
 #include <QAction>
 #include <QComboBox>
 #include <QFormLayout>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -37,33 +38,80 @@ void MainWindow::setupUi() {
     auto *central = new QWidget(this);
     auto *mainLayout = new QHBoxLayout(central);
 
+    // sectionCombo_ is kept hidden; sidebar nav buttons set its value
     sectionCombo_ = new QComboBox(this);
-    sectionCombo_->addItems({tr("Moje filmy"), tr("Watchlist"), tr("Oblíbené")});
+    sectionCombo_->addItems({tr("Moje filmy"), tr("Zhlédnuté"), tr("Oblíbené"), tr("Watchlist")});
+
+    // ── Sidebar ──────────────────────────────────────────────────────────────
+    auto *sidebarWidget = new QWidget(this);
+    sidebarWidget->setMinimumWidth(190);
+    sidebarWidget->setMaximumWidth(230);
+    auto *sidebarLayout = new QVBoxLayout(sidebarWidget);
+    sidebarLayout->setSpacing(6);
+
+    auto *appTitle = new QLabel(tr("🎬 Film Tracker"), sidebarWidget);
+    QFont appFont = appTitle->font();
+    appFont.setBold(true);
+    appFont.setPointSize(appFont.pointSize() + 2);
+    appTitle->setFont(appFont);
+    appTitle->setAlignment(Qt::AlignCenter);
+    sidebarLayout->addWidget(appTitle);
+    sidebarLayout->addSpacing(4);
+
+    // Navigation buttons (mutually exclusive, checkable)
+    auto *navGroup = new QGroupBox(tr("Sekce"), sidebarWidget);
+    auto *navLayout = new QVBoxLayout(navGroup);
+    navLayout->setSpacing(3);
+
+    const QString navStyle = QStringLiteral(
+        "QPushButton { text-align: left; padding: 6px 10px; border-radius: 4px; border: none; }"
+        "QPushButton:checked { background: palette(highlight); color: palette(highlighted-text); }"
+        "QPushButton:hover:!checked { background: palette(midlight); }");
+
+    auto *allFilmsBtn    = new QPushButton(tr("🎬  Moje filmy"),  navGroup);
+    auto *watchedNavBtn  = new QPushButton(tr("✓  Zhlédnuté"),    navGroup);
+    auto *favoriteNavBtn = new QPushButton(tr("❤  Oblíbené"),     navGroup);
+    auto *watchlistNavBtn = new QPushButton(tr("📋  Watchlist"),   navGroup);
+
+    for (auto *btn : {allFilmsBtn, watchedNavBtn, favoriteNavBtn, watchlistNavBtn}) {
+        btn->setFlat(true);
+        btn->setCheckable(true);
+        btn->setAutoExclusive(true);
+        btn->setStyleSheet(navStyle);
+        navLayout->addWidget(btn);
+    }
+    allFilmsBtn->setChecked(true);
+
+    sidebarLayout->addWidget(navGroup);
+    sidebarLayout->addStretch(1);
+
+    // Action buttons
+    auto *actionsGroup = new QGroupBox(tr("Akce"), sidebarWidget);
+    auto *actionsLayout = new QVBoxLayout(actionsGroup);
+    actionsLayout->setSpacing(4);
+
+    auto *addButton    = new QPushButton(tr("＋  Přidat"),  actionsGroup);
+    auto *editButton   = new QPushButton(tr("✏  Upravit"), actionsGroup);
+    auto *deleteButton = new QPushButton(tr("🗑  Smazat"),  actionsGroup);
+
+    actionsLayout->addWidget(addButton);
+    actionsLayout->addWidget(editButton);
+    actionsLayout->addWidget(deleteButton);
+    sidebarLayout->addWidget(actionsGroup);
+
+    // ── Right panel ──────────────────────────────────────────────────────────
+    auto *rightWidget = new QWidget(this);
+    auto *rightLayout = new QVBoxLayout(rightWidget);
 
     searchEdit_ = new QLineEdit(this);
-    searchEdit_->setPlaceholderText(tr("Hledat podle názvu, žánru nebo režiséra"));
+    searchEdit_->setPlaceholderText(tr("🔍  Hledat podle názvu, žánru nebo režiséra"));
+    rightLayout->addWidget(searchEdit_);
 
-    auto *addButton = new QPushButton(tr("+ Přidat"), this);
-    auto *editButton = new QPushButton(tr("Upravit"), this);
-    auto *deleteButton = new QPushButton(tr("Smazat"), this);
-
-    auto *sidebarWidget = new QWidget(this);
-    sidebarWidget->setMinimumWidth(280);
-    sidebarWidget->setMaximumWidth(340);
-    auto *sidebarLayout = new QVBoxLayout(sidebarWidget);
-
-    auto *menuBox = new QGroupBox(tr("Menu"), sidebarWidget);
-    auto *menuLayout = new QVBoxLayout(menuBox);
-    menuLayout->addWidget(new QLabel(tr("Sekce:"), menuBox));
-    menuLayout->addWidget(sectionCombo_);
-    menuLayout->addSpacing(8);
-    menuLayout->addWidget(addButton);
-    menuLayout->addWidget(editButton);
-    menuLayout->addWidget(deleteButton);
-    sidebarLayout->addWidget(menuBox);
-
-    auto *filterBox = new QGroupBox(tr("Filtry"), sidebarWidget);
-    auto *filterLayout = new QFormLayout(filterBox);
+    // Filters in a 2-column grid
+    auto *filterBox  = new QGroupBox(tr("Filtry"), rightWidget);
+    auto *filterGrid = new QGridLayout(filterBox);
+    filterGrid->setHorizontalSpacing(12);
+    filterGrid->setVerticalSpacing(6);
 
     nameFilterEdit_ = new QLineEdit(this);
     yearFilterEdit_ = new QLineEdit(this);
@@ -78,22 +126,25 @@ void MainWindow::setupUi() {
     countFilterCombo_ = new QComboBox(this);
     countFilterCombo_->addItems({tr("Vše"), QStringLiteral("10"), QStringLiteral("25"), QStringLiteral("50"), QStringLiteral("100")});
 
-    filterLayout->addRow(tr("Název"), nameFilterEdit_);
-    filterLayout->addRow(tr("Rok"), yearFilterEdit_);
-    filterLayout->addRow(tr("Žánr"), genreFilterCombo_);
-    filterLayout->addRow(tr("Sledováno"), watchFilterCombo_);
-    filterLayout->addRow(tr("Počet záznamů"), countFilterCombo_);
-    sidebarLayout->addWidget(filterBox);
-    sidebarLayout->addStretch(1);
+    // Row 0: Název  |  Rok
+    filterGrid->addWidget(new QLabel(tr("Název:"),          filterBox), 0, 0);
+    filterGrid->addWidget(nameFilterEdit_,                              0, 1);
+    filterGrid->addWidget(new QLabel(tr("Rok:"),            filterBox), 0, 2);
+    filterGrid->addWidget(yearFilterEdit_,                              0, 3);
+    // Row 1: Žánr   |  Sledováno
+    filterGrid->addWidget(new QLabel(tr("Žánr:"),           filterBox), 1, 0);
+    filterGrid->addWidget(genreFilterCombo_,                            1, 1);
+    filterGrid->addWidget(new QLabel(tr("Sledováno:"),      filterBox), 1, 2);
+    filterGrid->addWidget(watchFilterCombo_,                            1, 3);
+    // Row 2: Počet záznamů
+    filterGrid->addWidget(new QLabel(tr("Počet záznamů:"), filterBox), 2, 0);
+    filterGrid->addWidget(countFilterCombo_,                            2, 1);
+    filterGrid->setColumnStretch(1, 1);
+    filterGrid->setColumnStretch(3, 1);
 
-    auto *rightWidget = new QWidget(this);
-    auto *rightLayout = new QVBoxLayout(rightWidget);
+    rightLayout->addWidget(filterBox);
 
-    auto *topLayout = new QHBoxLayout();
-    topLayout->addWidget(new QLabel(tr("Hledat:"), rightWidget));
-    topLayout->addWidget(searchEdit_, 1);
-    rightLayout->addLayout(topLayout);
-
+    // Table + detail splitter
     auto *splitter = new QSplitter(this);
 
     table_ = new QTableWidget(this);
@@ -121,9 +172,9 @@ void MainWindow::setupUi() {
     detailDescription_ = new QTextEdit(detailWidget);
     detailDescription_->setReadOnly(true);
 
-    auto *favoriteButton = new QPushButton(tr("Přepnout oblíbené"), detailWidget);
-    auto *watchlistButton = new QPushButton(tr("Přepnout watchlist"), detailWidget);
-    auto *watchedButton = new QPushButton(tr("Označit jako sledované"), detailWidget);
+    auto *favoriteButton  = new QPushButton(tr("Přepnout oblíbené"),      detailWidget);
+    auto *watchlistButton = new QPushButton(tr("Přepnout watchlist"),      detailWidget);
+    auto *watchedButton   = new QPushButton(tr("Označit jako sledované"),  detailWidget);
 
     detailLayout->addWidget(detailTitle_);
     detailLayout->addWidget(detailMeta_);
@@ -148,35 +199,42 @@ void MainWindow::setupUi() {
     statusLabel_ = new QLabel(this);
     statusBar()->addPermanentWidget(statusLabel_);
 
-    connect(addButton, &QPushButton::clicked, this, &MainWindow::openAddDialog);
-    connect(editButton, &QPushButton::clicked, this, &MainWindow::openEditDialog);
+    // ── Connections ──────────────────────────────────────────────────────────
+    connect(addButton,    &QPushButton::clicked, this, &MainWindow::openAddDialog);
+    connect(editButton,   &QPushButton::clicked, this, &MainWindow::openEditDialog);
     connect(deleteButton, &QPushButton::clicked, this, &MainWindow::deleteSelectedFilm);
-    connect(favoriteButton, &QPushButton::clicked, this, &MainWindow::toggleFavorite);
+    connect(favoriteButton,  &QPushButton::clicked, this, &MainWindow::toggleFavorite);
     connect(watchlistButton, &QPushButton::clicked, this, &MainWindow::toggleWatchlist);
-    connect(watchedButton, &QPushButton::clicked, this, &MainWindow::markWatched);
+    connect(watchedButton,   &QPushButton::clicked, this, &MainWindow::markWatched);
 
-    connect(sectionCombo_, &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
-    connect(searchEdit_, &QLineEdit::textChanged, this, &MainWindow::applyFilters);
-    connect(nameFilterEdit_, &QLineEdit::textChanged, this, &MainWindow::applyFilters);
-    connect(yearFilterEdit_, &QLineEdit::textChanged, this, &MainWindow::applyFilters);
-    connect(genreFilterCombo_, &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
-    connect(watchFilterCombo_, &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
-    connect(countFilterCombo_, &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
+    // Sidebar nav → sectionCombo_ (hidden backing store for filter logic)
+    connect(allFilmsBtn,    &QPushButton::clicked, this, [this]() { sectionCombo_->setCurrentText(tr("Moje filmy")); });
+    connect(watchedNavBtn,  &QPushButton::clicked, this, [this]() { sectionCombo_->setCurrentText(tr("Zhlédnuté")); });
+    connect(favoriteNavBtn, &QPushButton::clicked, this, [this]() { sectionCombo_->setCurrentText(tr("Oblíbené")); });
+    connect(watchlistNavBtn,&QPushButton::clicked, this, [this]() { sectionCombo_->setCurrentText(tr("Watchlist")); });
+
+    connect(sectionCombo_,      &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
+    connect(searchEdit_,        &QLineEdit::textChanged,        this, &MainWindow::applyFilters);
+    connect(nameFilterEdit_,    &QLineEdit::textChanged,        this, &MainWindow::applyFilters);
+    connect(yearFilterEdit_,    &QLineEdit::textChanged,        this, &MainWindow::applyFilters);
+    connect(genreFilterCombo_,  &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
+    connect(watchFilterCombo_,  &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
+    connect(countFilterCombo_,  &QComboBox::currentTextChanged, this, &MainWindow::applyFilters);
     connect(table_, &QTableWidget::itemSelectionChanged, this, &MainWindow::updateDetailPanel);
 
-    auto *contextMenu = new QMenu(table_);
-    auto *editAction = contextMenu->addAction(tr("Upravit"));
-    auto *favAction = contextMenu->addAction(tr("Přepnout oblíbené"));
+    auto *contextMenu     = new QMenu(table_);
+    auto *editAction      = contextMenu->addAction(tr("Upravit"));
+    auto *favAction       = contextMenu->addAction(tr("Přepnout oblíbené"));
     auto *watchlistAction = contextMenu->addAction(tr("Přepnout watchlist"));
-    auto *watchedAction = contextMenu->addAction(tr("Označit jako sledované"));
+    auto *watchedAction   = contextMenu->addAction(tr("Označit jako sledované"));
     contextMenu->addSeparator();
     auto *deleteAction = contextMenu->addAction(tr("Smazat"));
 
-    connect(editAction, &QAction::triggered, this, &MainWindow::openEditDialog);
-    connect(favAction, &QAction::triggered, this, &MainWindow::toggleFavorite);
+    connect(editAction,      &QAction::triggered, this, &MainWindow::openEditDialog);
+    connect(favAction,       &QAction::triggered, this, &MainWindow::toggleFavorite);
     connect(watchlistAction, &QAction::triggered, this, &MainWindow::toggleWatchlist);
-    connect(watchedAction, &QAction::triggered, this, &MainWindow::markWatched);
-    connect(deleteAction, &QAction::triggered, this, &MainWindow::deleteSelectedFilm);
+    connect(watchedAction,   &QAction::triggered, this, &MainWindow::markWatched);
+    connect(deleteAction,    &QAction::triggered, this, &MainWindow::deleteSelectedFilm);
 
     table_->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(table_, &QWidget::customContextMenuRequested, this, [this, contextMenu](const QPoint &pos) {
@@ -355,6 +413,9 @@ void MainWindow::applyFilters() {
             continue;
         }
         if (section == tr("Oblíbené") && !film.oblibene) {
+            continue;
+        }
+        if (section == tr("Zhlédnuté") && !film.sledovano) {
             continue;
         }
 
