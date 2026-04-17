@@ -93,10 +93,12 @@ void MainWindow::setupUi() {
     auto *addButton    = new QPushButton(tr("＋  Přidat"),  actionsGroup);
     auto *editButton   = new QPushButton(tr("✏  Upravit"), actionsGroup);
     auto *deleteButton = new QPushButton(tr("🗑  Smazat"),  actionsGroup);
+    auto *aboutAuthorButton = new QPushButton(tr("ℹ  O autorovi"), actionsGroup);
 
     actionsLayout->addWidget(addButton);
     actionsLayout->addWidget(editButton);
     actionsLayout->addWidget(deleteButton);
+    actionsLayout->addWidget(aboutAuthorButton);
     sidebarLayout->addWidget(actionsGroup);
 
     // ── Right panel ──────────────────────────────────────────────────────────
@@ -203,6 +205,7 @@ void MainWindow::setupUi() {
     connect(addButton,    &QPushButton::clicked, this, &MainWindow::openAddDialog);
     connect(editButton,   &QPushButton::clicked, this, &MainWindow::openEditDialog);
     connect(deleteButton, &QPushButton::clicked, this, &MainWindow::deleteSelectedFilm);
+    connect(aboutAuthorButton, &QPushButton::clicked, this, &MainWindow::showAboutAuthor);
     connect(favoriteButton,  &QPushButton::clicked, this, &MainWindow::toggleFavorite);
     connect(watchlistButton, &QPushButton::clicked, this, &MainWindow::toggleWatchlist);
     connect(watchedButton,   &QPushButton::clicked, this, &MainWindow::markWatched);
@@ -393,7 +396,7 @@ void MainWindow::showStatistics() {
 void MainWindow::showAboutAuthor() {
     QMessageBox::about(this,
                        tr("O autorovi"),
-                       tr("Film Tracker Qt\n\nAutor: Marty Holub\nPředmět: ZUR0037\nRok: 2026"));
+                       tr("Martin Holub - HOL0601 17.4.2026."));
 }
 
 void MainWindow::applyFilters() {
