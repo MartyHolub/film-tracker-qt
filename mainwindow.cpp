@@ -35,9 +35,7 @@ MainWindow::MainWindow() {
 
 void MainWindow::setupUi() {
     auto *central = new QWidget(this);
-    auto *mainLayout = new QVBoxLayout(central);
-
-    auto *topLayout = new QHBoxLayout();
+    auto *mainLayout = new QHBoxLayout(central);
 
     sectionCombo_ = new QComboBox(this);
     sectionCombo_->addItems({tr("Moje filmy"), tr("Watchlist"), tr("Oblíbené")});
@@ -49,15 +47,22 @@ void MainWindow::setupUi() {
     auto *editButton = new QPushButton(tr("Upravit"), this);
     auto *deleteButton = new QPushButton(tr("Smazat"), this);
 
-    topLayout->addWidget(new QLabel(tr("Sekce:"), this));
-    topLayout->addWidget(sectionCombo_);
-    topLayout->addSpacing(12);
-    topLayout->addWidget(searchEdit_, 1);
-    topLayout->addWidget(addButton);
-    topLayout->addWidget(editButton);
-    topLayout->addWidget(deleteButton);
+    auto *sidebarWidget = new QWidget(this);
+    sidebarWidget->setMinimumWidth(280);
+    sidebarWidget->setMaximumWidth(340);
+    auto *sidebarLayout = new QVBoxLayout(sidebarWidget);
 
-    auto *filterBox = new QGroupBox(tr("Filtry"), this);
+    auto *menuBox = new QGroupBox(tr("Menu"), sidebarWidget);
+    auto *menuLayout = new QVBoxLayout(menuBox);
+    menuLayout->addWidget(new QLabel(tr("Sekce:"), menuBox));
+    menuLayout->addWidget(sectionCombo_);
+    menuLayout->addSpacing(8);
+    menuLayout->addWidget(addButton);
+    menuLayout->addWidget(editButton);
+    menuLayout->addWidget(deleteButton);
+    sidebarLayout->addWidget(menuBox);
+
+    auto *filterBox = new QGroupBox(tr("Filtry"), sidebarWidget);
     auto *filterLayout = new QFormLayout(filterBox);
 
     nameFilterEdit_ = new QLineEdit(this);
@@ -78,6 +83,16 @@ void MainWindow::setupUi() {
     filterLayout->addRow(tr("Žánr"), genreFilterCombo_);
     filterLayout->addRow(tr("Sledováno"), watchFilterCombo_);
     filterLayout->addRow(tr("Počet záznamů"), countFilterCombo_);
+    sidebarLayout->addWidget(filterBox);
+    sidebarLayout->addStretch(1);
+
+    auto *rightWidget = new QWidget(this);
+    auto *rightLayout = new QVBoxLayout(rightWidget);
+
+    auto *topLayout = new QHBoxLayout();
+    topLayout->addWidget(new QLabel(tr("Hledat:"), rightWidget));
+    topLayout->addWidget(searchEdit_, 1);
+    rightLayout->addLayout(topLayout);
 
     auto *splitter = new QSplitter(this);
 
@@ -123,9 +138,10 @@ void MainWindow::setupUi() {
     splitter->setStretchFactor(0, 3);
     splitter->setStretchFactor(1, 2);
 
-    mainLayout->addLayout(topLayout);
-    mainLayout->addWidget(filterBox);
-    mainLayout->addWidget(splitter, 1);
+    rightLayout->addWidget(splitter, 1);
+
+    mainLayout->addWidget(sidebarWidget);
+    mainLayout->addWidget(rightWidget, 1);
 
     setCentralWidget(central);
 
