@@ -35,8 +35,9 @@ StatsDialog::StatsDialog(const QVector<Film> &films, QWidget *parent)
     });
 
     QStringList top;
-    for (int i = 0; i < std::min(5, sortedFilms.size()); ++i) {
-        top.append(QString::number(i + 1) + ". " + sortedFilms[i].nazev + " (" + QString::number(sortedFilms[i].hodnoceni, 'f', 1) + ")");
+    const qsizetype topCount = std::min<qsizetype>(5, sortedFilms.size());
+    for (qsizetype i = 0; i < topCount; ++i) {
+        top.append(QString::number(static_cast<int>(i + 1)) + ". " + sortedFilms[i].nazev + " (" + QString::number(sortedFilms[i].hodnoceni, 'f', 1) + ")");
     }
 
     auto *layout = new QVBoxLayout(this);
