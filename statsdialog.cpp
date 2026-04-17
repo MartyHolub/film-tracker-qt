@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QTextEdit>
 #include <QVBoxLayout>
+#include <algorithm>
 
 StatsDialog::StatsDialog(const QVector<Film> &films, QWidget *parent)
     : QDialog(parent) {

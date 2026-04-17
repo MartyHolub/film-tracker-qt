@@ -20,6 +20,7 @@
 #include <QTableWidget>
 #include <QTextEdit>
 #include <QVBoxLayout>
+#include <QWidget>
 
 MainWindow::MainWindow() {
     setWindowTitle(tr("Film Tracker Qt"));
